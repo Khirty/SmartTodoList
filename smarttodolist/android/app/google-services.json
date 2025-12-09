@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "247107784446",
+    "project_id": "flutter-todolist-project",
+    "storage_bucket": "flutter-todolist-project.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:247107784446:android:18eba0983c8b030e891faf",
+        "android_client_info": {
+          "package_name": "com.example.smarttodlist"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "247107784446-vqtgch17t3dlk87dgvn57bo91t7jd163.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMjnKcJ6W4-0n34bq4akAuM8jQAw9cizU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "247107784446-vqtgch17t3dlk87dgvn57bo91t7jd163.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "247107784446-peto6ngpopmf4ritllvusug98lt8teki.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.smarttodlist"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
