@@ -11,7 +11,7 @@ final model = GenerativeModel(
   apiKey: 'AIzaSyC4Xp_h3Oq1RnqR14nEDCGJ1pxfZKzhJY4',
 
 ); 
-
+    
 
 
   Future<String> sendMessage(String userMessage, List<Map<String, dynamic>> tasks) async {
