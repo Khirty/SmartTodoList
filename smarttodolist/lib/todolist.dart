@@ -1,7 +1,8 @@
-// todolist.dart - Ultra Modern Design with Logout & AI Chat
+// todolist.dart - Ultra Modern Design with Logout, AI Chat & Firebase
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'auth_service.dart';
 import 'chat_screen.dart';
 
@@ -15,6 +16,7 @@ class ToDoPage extends StatefulWidget {
 class _ToDoPageState extends State<ToDoPage> {
   final TextEditingController searchController = TextEditingController();
   final _authService = AuthService();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   List<Map<String, dynamic>> tasks = [];
   String selectedCategory = "General";
@@ -30,6 +32,36 @@ class _ToDoPageState extends State<ToDoPage> {
   };
 
   final priorities = ["High", "Medium", "Low"];
+
+  @override
+  void initState() {
+    super.initState();
+    loadTasksFromDB();
+  }
+
+  Future<void> loadTasksFromDB() async {
+    final snapshot = await _firestore.collection('tasks').get();
+    setState(() {
+      tasks = snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    });
+  }
+
+  Future<void> addTaskToDB(Map<String, dynamic> task) async {
+    final docRef = await _firestore.collection('tasks').add(task);
+    task['id'] = docRef.id;
+  }
+
+  Future<void> updateTaskInDB(String id, Map<String, dynamic> task) async {
+    await _firestore.collection('tasks').doc(id).update(task);
+  }
+
+  Future<void> deleteTaskFromDB(String id) async {
+    await _firestore.collection('tasks').doc(id).delete();
+  }
 
   void addTaskModal() {
     final nameCtrl = TextEditingController();
@@ -161,19 +193,19 @@ class _ToDoPageState extends State<ToDoPage> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
                             if (nameCtrl.text.trim().isEmpty) return;
                             final isoDate = DateTime.now().toIso8601String().substring(0, 10);
-                            setState(() {
-                              tasks.add({
-                                "name": nameCtrl.text.trim(),
-                                "done": false,
-                                "imageBytes": modalImage,
-                                "category": modalCat,
-                                "priority": modalPrio,
-                                "date": isoDate,
-                              });
-                            });
+                            final newTask = {
+                              "name": nameCtrl.text.trim(),
+                              "done": false,
+                              "imageBytes": modalImage,
+                              "category": modalCat,
+                              "priority": modalPrio,
+                              "date": isoDate,
+                            };
+                            setState(() => tasks.add(newTask));
+                            await addTaskToDB(newTask);
                             Navigator.pop(ctx);
                           },
                           style: ElevatedButton.styleFrom(
@@ -195,11 +227,15 @@ class _ToDoPageState extends State<ToDoPage> {
     );
   }
 
-  void toggleTask(int index) {
+  void toggleTask(int index) async {
     setState(() => tasks[index]["done"] = !tasks[index]["done"]);
+    if (tasks[index].containsKey('id')) {
+      await updateTaskInDB(tasks[index]['id'], {"done": tasks[index]["done"]});
+    }
   }
 
-  void confirmDelete(int index) {
+  void confirmDelete(int index) async {
+    final id = tasks[index]['id'];
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -214,12 +250,157 @@ class _ToDoPageState extends State<ToDoPage> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text("Delete"),
-            onPressed: () {
+            onPressed: () async {
               setState(() => tasks.removeAt(index));
+              if (id != null) await deleteTaskFromDB(id);
               Navigator.pop(context);
             },
           ),
         ],
+      ),
+    );
+  }
+
+  void editTask(int index) {
+    final editController = TextEditingController(text: tasks[index]["name"]);
+    String newCategory = tasks[index]["category"];
+    String newPriority = tasks[index]["priority"];
+
+    showDialog(
+      context: context,
+      builder: (_) => StatefulBuilder(
+        builder: (context, setDialogState) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 500),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Colors.white, Colors.grey.shade50],
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Color(0xFF667eea).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(Icons.edit, color: Color(0xFF667eea)),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      "Edit Task",
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                TextField(
+                  controller: editController,
+                  decoration: InputDecoration(
+                    labelText: "Task Name",
+                    prefixIcon: const Icon(Icons.edit_outlined),
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: newCategory,
+                  items: categoryColors.keys
+                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) setDialogState(() => newCategory = v);
+                  },
+                  decoration: InputDecoration(
+                    labelText: "Category",
+                    prefixIcon: const Icon(Icons.category_outlined),
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: newPriority,
+                  items: priorities
+                      .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) setDialogState(() => newPriority = v);
+                  },
+                  decoration: InputDecoration(
+                    labelText: "Priority",
+                    prefixIcon: const Icon(Icons.flag_outlined),
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text("Cancel"),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          tasks[index]["name"] = editController.text.trim();
+                          tasks[index]["category"] = newCategory;
+                          tasks[index]["priority"] = newPriority;
+                          setState(() {});
+
+                          if (tasks[index].containsKey('id')) {
+                            await updateTaskInDB(tasks[index]['id'], {
+                              "name": tasks[index]["name"],
+                              "category": newCategory,
+                              "priority": newPriority
+                            });
+                          }
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFF667eea),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text("Save", style: TextStyle(color: Colors.white)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -280,10 +461,7 @@ class _ToDoPageState extends State<ToDoPage> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFf5f7fa),
-              Color(0xFFc3cfe2),
-            ],
+            colors: [Color(0xFFf5f7fa), Color(0xFFc3cfe2)],
           ),
         ),
         child: SafeArea(
@@ -324,13 +502,11 @@ class _ToDoPageState extends State<ToDoPage> {
                       ),
                     ),
                     const Spacer(),
-                    // Logout button
                     IconButton(
                       onPressed: _logout,
                       icon: const Icon(Icons.logout_rounded, color: Color(0xFFef476f)),
                       tooltip: 'Logout',
                     ),
-                    // Filter button
                     PopupMenuButton<String>(
                       icon: const Icon(Icons.filter_list_rounded, color: Color(0xFF667eea)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -374,13 +550,10 @@ class _ToDoPageState extends State<ToDoPage> {
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     children: [
-                      // AI suggestion
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFFffd166), Color(0xFFef476f)],
-                          ),
+                          gradient: LinearGradient(colors: [Color(0xFFffd166), Color(0xFFef476f)]),
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
@@ -409,7 +582,6 @@ class _ToDoPageState extends State<ToDoPage> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Search bar
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -435,7 +607,6 @@ class _ToDoPageState extends State<ToDoPage> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Task list
                       Expanded(
                         child: filteredTasks.isEmpty
                             ? Center(
@@ -547,6 +718,10 @@ class _ToDoPageState extends State<ToDoPage> {
                                             onPressed: () => toggleTask(realIndex),
                                           ),
                                           IconButton(
+                                            icon: const Icon(Icons.edit_outlined, color: Color(0xFF667eea)),
+                                            onPressed: () => editTask(realIndex),
+                                          ),
+                                          IconButton(
                                             icon: const Icon(Icons.delete_outline, color: Color(0xFFef476f)),
                                             onPressed: () => confirmDelete(realIndex),
                                           ),
@@ -567,7 +742,6 @@ class _ToDoPageState extends State<ToDoPage> {
       ),
       floatingActionButton: Stack(
         children: [
-          // AI Chat button (bottom right, slightly up)
           Positioned(
             right: 16,
             bottom: 80,
@@ -588,7 +762,6 @@ class _ToDoPageState extends State<ToDoPage> {
               child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
             ),
           ),
-          // Add Task button
           Positioned(
             right: 16,
             bottom: 16,
