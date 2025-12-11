@@ -147,38 +147,38 @@ class _StartPageState extends State<StartPage> with SingleTickerProviderStateMix
           child: Stack(
             children: [
               // Logout button
-              Positioned(
-                top: 16,
-                right: 16,
-                child: IconButton(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        title: const Text("Logout"),
-                        content: const Text("Are you sure you want to logout?"),
-                        actions: [
-                          TextButton(
-                            child: const Text("Cancel"),
-                            onPressed: () => Navigator.pop(context),
-                          ),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                            child: const Text("Logout"),
-                            onPressed: () {
-                              AuthService().signOut();
-                              Navigator.pop(context);
-                            },
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.logout_rounded, color: Colors.white),
-                  tooltip: 'Logout',
-                ),
-              ),
+              // Positioned(
+              //   top: 16,
+              //   right: 16,
+              //   child: IconButton(
+              //     onPressed: () {
+              //       showDialog(
+              //         context: context,
+              //         builder: (_) => AlertDialog(
+              //           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              //           title: const Text("Logout"),
+              //           content: const Text("Are you sure you want to logout?"),
+              //           actions: [
+              //             TextButton(
+              //               child: const Text("Cancel"),
+              //               onPressed: () => Navigator.pop(context),
+              //             ),
+              //             ElevatedButton(
+              //               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              //               child: const Text("Logout"),
+              //               onPressed: () {
+              //                 AuthService().signOut();
+              //                 Navigator.pop(context);
+              //               },
+              //             ),
+              //           ],
+              //         ),
+              //       );
+              //     },
+              //     icon: const Icon(Icons.logout_rounded, color: Colors.white),
+              //     tooltip: 'Logout',
+              //   ),
+              // ),
 
               // Main content
               Center(
