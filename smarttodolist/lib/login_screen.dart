@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'auth_service.dart';
 import 'register_screen.dart';
+import 'todolist.dart'; // Make sure this points to your dashboard page
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -49,6 +50,14 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           _emailController.text.trim(),
           _passwordController.text,
         );
+
+        // ✅ Navigate to dashboard after successful login
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const ToDoPage()),
+          );
+        }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -75,9 +84,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF667eea),
-              Color(0xFF764ba2),
-              Color(0xFFf093fb),
+              const Color(0xFF667eea),
+              const Color(0xFF764ba2),
+              const Color(0xFFf093fb),
             ],
           ),
         ),

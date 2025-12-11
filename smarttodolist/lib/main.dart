@@ -41,14 +41,14 @@ class AuthWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authService = AuthService();
-    
+
     return StreamBuilder<User?>(
       stream: authService.authStateChanges,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
             body: Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Color(0xFF667eea), Color(0xFF764ba2)],
                 ),
@@ -59,11 +59,13 @@ class AuthWrapper extends StatelessWidget {
             ),
           );
         }
-        
+
         if (snapshot.hasData) {
-          return const StartPage();
+          // If logged in, go directly to Dashboard (ToDoPage)
+          return const ToDoPage();
         } else {
-          return const LoginScreen();
+          // If not logged in, show Welcome Screen (StartPage)
+          return const StartPage();
         }
       },
     );
@@ -103,7 +105,7 @@ class _StartPageState extends State<StartPage> with SingleTickerProviderStateMix
     _bounce = Tween<double>(begin: 0, end: -15).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
-    
+
     _fade = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeIn),
     );
@@ -130,7 +132,7 @@ class _StartPageState extends State<StartPage> with SingleTickerProviderStateMix
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -177,7 +179,7 @@ class _StartPageState extends State<StartPage> with SingleTickerProviderStateMix
                   tooltip: 'Logout',
                 ),
               ),
-              
+
               // Main content
               Center(
                 child: Padding(
@@ -290,7 +292,7 @@ class _StartPageState extends State<StartPage> with SingleTickerProviderStateMix
 
                       const SizedBox(height: 48),
 
-                      // Start button
+                      // Start button → now goes to LoginScreen instead of ToDoPage
                       SizedBox(
                         width: 220,
                         height: 60,
@@ -309,7 +311,7 @@ class _StartPageState extends State<StartPage> with SingleTickerProviderStateMix
                               context,
                               PageRouteBuilder(
                                 transitionDuration: const Duration(milliseconds: 600),
-                                pageBuilder: (_, __, ___) => const ToDoPage(),
+                                pageBuilder: (_, __, ___) => const LoginScreen(),
                                 transitionsBuilder: (_, anim, __, child) {
                                   return FadeTransition(
                                     opacity: anim,

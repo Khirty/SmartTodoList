@@ -8,7 +8,7 @@ final model = GenerativeModel(
 
   model: 'gemini-2.5-flash', // Change it here
 
-  apiKey: 'AIzaSyC4Xp_h3Oq1RnqR14nEDCGJ1pxfZKzhJY4',
+  apiKey: 'AIzaSyCJiWGI2ZGOsTdBP3kHAPO2wTlSn7T6Rt0',
 
 ); 
     
